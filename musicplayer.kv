@@ -1,0 +1,202 @@
+
+
+<MusicPlayer>:
+
+    orientation: 'vertical'
+
+    canvas.before:
+
+        Rectangle:
+
+            pos: self.pos
+
+            size: self.size
+
+
+
+    playlist_box: playlist_box
+
+    current_song_label: current_song_label
+
+    song_position_label: song_position_label
+
+    song_duration_label: song_duration_label
+
+	
+
+    BoxLayout:
+
+        orientation: 'horizontal'
+        spacing: 0
+        size_hint_y: 1
+        size_hint_x: 1
+
+        BoxLayout:
+
+            orientation: 'vertical'
+
+            size_hint_x: 1
+
+            Label:
+
+                id: current_song_label
+
+                text: 'Waiting For Music'
+
+                size_hint_x: 1
+
+
+            BoxLayout:
+
+                orientation: 'horizontal'
+
+                size_hint_x: 1
+
+                Button:
+                    size_hint_x: None
+                    size_hint_y: None
+                    width: max(100, min(self.parent.width * 0.2, self.parent.height * 0.2))
+                    height: max(100, min(self.parent.width * 0.2, self.parent.height * 0.2))
+                    keep_ratio: True
+                    allow_stretch: True
+                    
+                    on_release: root.previous_song()
+
+                    background_normal: root.previous_icon_image
+
+                    background_down: root.previous_icon_image
+
+                Button:
+                    size_hint_y: None
+                    height: self.width 
+
+                    id: play_pause_button
+
+                    background_normal: root.play_pause_image
+
+                    background_down: root.play_pause_image
+
+                    size_hint_x: None
+                    size_hint_y: None
+                    width: max(100, min(self.parent.width * 0.2, self.parent.height * 0.2))
+                    height: max(100, min(self.parent.width * 0.2, self.parent.height * 0.2))
+                    keep_ratio: True
+                    allow_stretch: True
+
+                    on_release: root.stop_song()
+
+                Button:
+                    background_normal: root.next_icon_image
+                    background_down: root.next_icon_image
+                    size_hint_x: None
+                    size_hint_y: None
+                    width: max(100, min(self.parent.width * 0.2, self.parent.height * 0.2))
+                    height: max(100, min(self.parent.width * 0.2, self.parent.height * 0.2))
+                    keep_ratio: True
+                    allow_stretch: True
+                    on_release: root.next_song()
+
+
+
+
+      
+        Image:
+            id: album_icon
+            source: '/opt/dash_os/app_icons/default_album_icon.png'
+            size_hint_y: None
+            height: self.width * 0.3 
+            keep_ratio: True
+            opacity: 1 if root.width > 500 else 0
+
+        Button:
+            background_normal: root.playlist_image
+            background_down: root.playlist_image
+            size_hint_x: None
+            size_hint_y: None
+            width: max(100, min(self.parent.width * 0.2, self.parent.height * 0.2))
+            height: max(100, min(self.parent.width * 0.2, self.parent.height * 0.2))
+            keep_ratio: True
+            allow_stretch: True
+            on_release: root.open_second_screen()
+
+
+    BoxLayout:
+
+        orientation: 'horizontal'
+
+        size_hint_y: 0.33
+
+        Label:
+
+            id: song_position_label
+
+            text: "0:00"
+
+            size_hint_x: 0.1
+
+        ProgressBar:
+
+            id: song_progress
+
+            value: (root.song_position / root.song_duration) if root.sound is not None else 0
+
+            size_hint_x: 0.8
+
+        Label:
+
+            id: song_duration_label
+
+            text: "0:00"
+
+            size_hint_x: 0.1
+
+    GridLayout:
+
+        id: playlist_box
+
+        cols: 1
+
+        size_hint_y: None
+
+        height: 0
+
+
+
+<SecondScreen>:
+
+    BoxLayout:
+
+        orientation: 'vertical'
+
+        GridLayout:
+
+            cols: 1
+
+            size_hint_y: 0.9
+
+            ScrollView:
+
+                do_scroll_x: False
+
+                BoxLayout:
+
+                    id: second_screen_playlist_box
+
+                    orientation: 'vertical'
+
+                    size_hint_y: None
+
+                    height: self.minimum_height
+
+                    spacing: 10
+
+        Button:
+
+            text: 'Close'
+
+            size_hint_y: 0.1
+
+            on_release: root.dismiss()
+
+
+
