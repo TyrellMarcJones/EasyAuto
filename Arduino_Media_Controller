@@ -1,0 +1,113 @@
+#include <Wire.h>
+
+const int relayPin = 2; // Define the relay control pin
+const float voltageThreshold = 11.9; // Set the voltage threshold
+
+// Floats for resistor values in the divider (in ohms)
+float R1 = 30000.0;
+float R2 = 7500.0;
+
+// Float for Reference Voltage
+float ref_voltage = 5.0;
+
+void setup() {
+  Wire.begin(8);                // join I2C bus with address #8
+  Wire.onReceive(receiveEvent); // function that executes whenever data is received from the master
+  pinMode(LED_BUILTIN, OUTPUT);  // sets onboard LED as output
+  pinMode(relayPin, OUTPUT);    // set relayPin as an output
+  Serial.begin(9600);            // initialize serial communication
+}
+bool powerConnected = false;
+unsigned long lastAboveThresholdTime = 0;
+unsigned long remainingTime ; // Initialize remainingTime outside the loop
+
+void loop() {
+  delay(100);
+
+  // Read the Analog Input
+  int adc_value = analogRead(A0);
+  float adc_voltage = (adc_value * ref_voltage) / 1024.0;
+  float in_voltage = adc_voltage * (R1 + R2) / R2;
+
+  Serial.print("Input Voltage = ");
+  Serial.println(in_voltage, 2);
+
+  unsigned long elapsedTime;
+
+  if (in_voltage > voltageThreshold && !powerConnected) {
+    Serial.println("Power Connected: Powering Raspberry Pi");
+    digitalWrite(relayPin, HIGH); // Turn on the relay
+    powerConnected = true; // Set the flag to true
+    remainingTime = 15000; // Reset remainingTime to 30 seconds
+  } 
+  if (in_voltage > voltageThreshold) {
+    lastAboveThresholdTime = millis(); // Update the time when voltage is above threshold
+
+    remainingTime = 10000; // Reset remainingTime to 30 seconds;
+    }
+  if (in_voltage < voltageThreshold) {
+    Serial.println("Power = False");
+    
+    powerConnected = false; // Reset the flag when voltage goes below threshold
+    // Check if the voltage was above the threshold for the last 30 seconds
+    elapsedTime = millis() - lastAboveThresholdTime;
+    if (elapsedTime >= remainingTime) {
+      Serial.println("Power Lost: Powering Down Raspberry Pi");
+      Serial.println("111");
+
+      delay(15000);
+      Serial.println("DOWN----------------------------------");
+
+      digitalWrite(relayPin, LOW); // Turn off the relay
+    } else {
+      // Calculate and print the remaining time
+      Serial.print("Power Lost: Waiting for ");
+      Serial.print((remainingTime - elapsedTime) / 1000); // Convert milliseconds to seconds
+      Serial.println(" seconds...");
+    }
+
+    powerConnected = false;
+
+  }
+
+  // Short delay
+  delay(500);
+}
+
+
+void receiveEvent(int howMany) {
+  char receivedData[4]; // Assuming a maximum of 3 digits plus the null terminator
+  int dataIndex = 0;
+
+  while (Wire.available() > 0) {
+    char c = Wire.read();
+    if (dataIndex < 3) { // Avoid buffer overflow
+      receivedData[dataIndex] = c;
+      dataIndex++;
+    }
+  }
+
+  receivedData[dataIndex] = '\0'; // Terminate the string
+
+  if (strcmp(receivedData, "H") == 0) {
+    digitalWrite(relayPin, HIGH); // Turn on the relay
+  } else if (strcmp(receivedData, "L") == 0) {
+    digitalWrite(relayPin, LOW); // Turn off the relay
+  } else {
+    int receivedNumber = atoi(receivedData); // Convert the received string to an integer
+    Serial.println(receivedNumber);
+    delay(200);
+
+    if (receivedNumber == 0) {
+      digitalWrite(LED_BUILTIN, LOW);   // turn the LED off by making the voltage LOW
+    }
+    if (receivedNumber == 307) {
+      Serial.println("Single Click");
+    }
+    if (receivedNumber == 324) {
+      Serial.println("Double Click");
+    } else if (receivedNumber == 336) {
+      Serial.println("Long Click");
+    }
+  }
+}
